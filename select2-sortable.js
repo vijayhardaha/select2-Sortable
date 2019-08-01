@@ -43,6 +43,8 @@
 					//extend passed args with default args
 					var options = $.extend(defaults, args);
 
+					$this.select2SetOrderOnInit();
+
 					// Init select2 only if not already initialized to prevent select2 configuration loss
 					if (typeof ($this.data('select2')) !== 'object') {
 						$this.select2(options);
@@ -111,12 +113,12 @@
 				//check array length
 				if ($selects.length) {
 					//remove white space
-					$selects = selects.map(i => i.trim());
+					$selects = $selects.map(i => i.trim());
 
 					//run loop for values
 					$.each($selects, function (key, value) {
 						//find the option with value
-						var $option = $(select).find('option[value="' + value + '"]');
+						var $option = $select.find('option[value="' + value + '"]');
 						//push into sorted array
 						$sorted.push($option);
 						//remove current option tag
