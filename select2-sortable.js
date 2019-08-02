@@ -43,7 +43,7 @@
 					//extend passed args with default args
 					var options = $.extend(defaults, args);
 
-					$this.select2SetOrderOnInit();
+
 
 					// Init select2 only if not already initialized to prevent select2 configuration loss
 					if (typeof ($this.data('select2')) !== 'object') {
@@ -54,6 +54,8 @@
 					$this.each(function () {
 						var $select = $(this),
 							$select2choices = $select.siblings('.select2-container').first("ul.select2-selection__rendered");
+
+						$this.select2SetOrderOnInit($select);
 
 						// Init jQuery UI Sortable
 						$select2choices.sortable({
@@ -97,9 +99,7 @@
 			});
 			return $this;
 		},
-		select2SetOrderOnInit: function () {
-			var $select = $(this);
-
+		select2SetOrderOnInit: function ($select) {
 			//get values as string using attribute
 			var $initials = $select.attr('data-initials');
 
