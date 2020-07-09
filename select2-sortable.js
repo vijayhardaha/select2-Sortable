@@ -55,7 +55,7 @@
                 .siblings(".select2-container")
                 .first("ul.select2-selection__rendered");
 
-            select.select2SetOrderOnInit($select);
+            select.select2SetOrderOnInit(_select);
 
             //  Init jQuery UI Sortable.
             choices.sortable({
@@ -123,7 +123,7 @@
           // Run loop for values.
           $.each(selectedOptions, function (key, value) {
             // Find the option with value.
-            var option = $select.find('option[value="' + value + '"]');
+            var option = select.find('option[value="' + value + '"]');
 
             // Push into sorted array.
             sorted.push(option);
