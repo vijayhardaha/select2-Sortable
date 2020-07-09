@@ -1,8 +1,8 @@
 /**
  * Select2 Sortable
- * 
+ *
  * Description: Allows you to have a sortable option with Drag & Drop in multiple select2 field
- * Version : 1.0.0
+ * Version : 1.0.1
  * Author : Vijay Hardaha
  * Inspired by : select2-Sortable (https://github.com/vijayhardaha/select2-Sortable)
  * License : MIT
@@ -11,127 +11,134 @@
  */
 
 !(function ($) {
-	$.fn.extend({
-		select2Sortable: function () {
-			//get arguments 
-			var args = Array.prototype.slice.call(arguments, 0);
+  $.fn.extend({
+    select2Sortable: function () {
+      // Get arguments.
+      var args = Array.prototype.slice.call(arguments, 0);
 
-			//filter mutiple attribite
-			$this = this.filter('[multiple]'),
-				validMethods = ['destroy'];
+      // Filter mutiple attribite.
+      var select = this.filter("[multiple]"),
+        validMethods = ["destroy"];
 
-			//check if this multiple select or not.
-			if ($this.length == 0) {
+      // Check if this multiple select or not.
+      if (select.length == 0) {
+        // If not then initialize select2 with args.
+        this.select2(args[0]);
+      } else {
+        // If args is empty or type is object then go inside.
+        if (args.length === 0 || typeof args[0] === "object") {
+          // Define defaults args for sortable usages.
+          var defaults = {
+            // Sort the initialized select2 options by A-Z.
+            sorter: (data) =>
+              data.sort(function (a, b) {
+                return a.text.localeCompare(b.text);
+              }),
+            // Disabled createTag.
+            createTag: function (params) {
+              return undefined;
+            },
+          };
 
-				//if not then initialize select2 with args
-				this.select2(args);
+          // Extend passed args with default args.
+          var options = $.extend([], defaults, args[0]);
 
-			} else {
-				//if args is empty or type is object then go inside
-				if (args.length === 0 || typeof (args[0]) === 'object') {
+          // Init select2 only if not already initialized to prevent select2 configuration loss.
+          if (typeof select.data("select2") !== "object") {
+            select.select2(options);
+          }
 
-					//define defaults args for sortable usages
-					var defaults = {
-						//sort the initialized select2 options by A-Z
-						sorter: data => data.sort((a, b) => a.text.localeCompare(b.text)),
-						// Disabled createTag
-						createTag: function (params) {
-							return undefined;
-						}
-					};
+          // Run loop for each instance of selector.
+          select.each(function () {
+            var _select = $(this),
+              choices = _select
+                .siblings(".select2-container")
+                .first("ul.select2-selection__rendered");
 
-					//extend passed args with default args
-					var options = $.extend(defaults, args);
+            select.select2SetOrderOnInit($select);
 
+            //  Init jQuery UI Sortable.
+            choices.sortable({
+              placeholder: "ui-state-highlight",
+              forcePlaceholderSize: true,
+              items: "li:not(.select2-search__field)",
+              tolerance: "pointer",
+            });
 
+            //  Apply options ordering in sortstop event.
+            choices.on("sortstop.select2sortable", function (event, ui) {
+              $(
+                choices.find(".select2-selection__choice").get().reverse()
+              ).each(function () {
+                var title = $(this).attr("title");
+                var option = _select.find("option:contains(" + title + ")");
+                _select.prepend(option);
+              });
+            });
+          });
+        } else if (typeof (args[0] === "string")) {
+          if ($.inArray(args[0], validMethods) == -1) {
+            throw "Unknown method: " + args[0];
+          }
+          if (args[0] === "destroy") {
+            select.select2SortableDestroy();
+          }
+        }
+      }
+    },
+    select2SortableDestroy: function () {
+      var select = this.filter("[multiple]");
+      select.each(function () {
+        var choices = $(this)
+          .siblings(".select2-container")
+          .first("ul.select2-selection__rendered");
 
-					// Init select2 only if not already initialized to prevent select2 configuration loss
-					if (typeof ($this.data('select2')) !== 'object') {
-						$this.select2(options);
-					}
+        // Unbind sortstop event.
+        choices.unbind("sortstop.select2sortable");
 
-					// run loop for each instance of selector
-					$this.each(function () {
-						var $select = $(this),
-							$select2choices = $select.siblings('.select2-container').first("ul.select2-selection__rendered");
+        // Destroy select2Sortable.
+        choices.sortable("destroy");
+      });
+      return select;
+    },
+    select2SetOrderOnInit: function (select) {
+      // Get values as string using attribute.
+      var initials = select.attr("data-initials");
 
-						$this.select2SetOrderOnInit($select);
+      // Create sorted/seleted options empty array.
+      var sorted = [];
 
-						// Init jQuery UI Sortable
-						$select2choices.sortable({
-							placeholder: "ui-state-highlight",
-							forcePlaceholderSize: true,
-							items: "li:not(.select2-search__field)",
-							tolerance: "pointer"
-						});
+      // Check values are empty or not.
+      if (typeof initials !== "undefined") {
+        // Convert string to array.
+        var selectedOptions = initials.split(",");
 
-						// apply options ordering in sortstop event
-						$select2choices.on("sortstop.select2sortable", function (event, ui) {
-							$($select2choices.find(".select2-selection__choice").get().reverse()).each(function () {
-								var title = $(this).attr("title");
-								var option = $select.find("option:contains(" + title + ")");
-								$select.prepend(option);
-							});
-						});
-					});
+        // Check array length.
+        if (selectedOptions.length) {
+          // Remove white space.
+          selectedOptions = selectedOptions.map(function (i) {
+            i.trim();
+          });
 
-				} else if (typeof (args[0] === 'string')) {
-					if ($.inArray(args[0], validMethods) == -1) {
-						throw "Unknown method: " + args[0];
-					}
-					if (args[0] === 'destroy') {
-						$this.select2SortableDestroy();
-					}
-				}
-			}
-		},
-		select2SortableDestroy: function () {
-			var $this = this.filter('[multiple]');
-			$this.each(function () {
-				var $select = $(this),
-					$select2choices = $select.siblings('.select2-container').first("ul.select2-selection__rendered");
+          // Run loop for values.
+          $.each(selectedOptions, function (key, value) {
+            // Find the option with value.
+            var option = $select.find('option[value="' + value + '"]');
 
-				// unbind sortstop event
-				$select2choices.unbind("sortstop.select2sortable");
+            // Push into sorted array.
+            sorted.push(option);
 
-				// destroy select2Sortable
-				$select2choices.sortable('destroy');
-			});
-			return $this;
-		},
-		select2SetOrderOnInit: function ($select) {
-			//get values as string using attribute
-			var $initials = $select.attr('data-initials');
+            // Remove current option tag.
+            option.remove();
+          });
+        }
+      }
 
-			//create sorted/seleted options empty arrya
-			var $sorted = [];
-
-			//check values are empty or not
-			if (typeof $initials !== undefined) {
-				//convert string to array
-				var $selects = $initials.split(',');
-				//check array length
-				if ($selects.length) {
-					//remove white space
-					$selects = $selects.map(i => i.trim());
-
-					//run loop for values
-					$.each($selects, function (key, value) {
-						//find the option with value
-						var $option = $select.find('option[value="' + value + '"]');
-						//push into sorted array
-						$sorted.push($option);
-						//remove current option tag
-						$option.remove();
-					})
-				}
-			}
-
-			//check if sorted has value or not
-			if ($sorted.length) {
-				//if yes then prepend all the option values
-				$select.prepend($sorted);
-			}
-		}
-	})
+      // Check if sorted has value or not.
+      if (sorted.length) {
+        // If yes then prepend all the option values.
+        select.prepend(sorted);
+      }
+    },
+  });
 })(jQuery);
