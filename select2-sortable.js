@@ -117,7 +117,7 @@
         if (selectedOptions.length) {
           // Remove white space.
           selectedOptions = selectedOptions.map(function (i) {
-            i.trim();
+            return i.trim();
           });
 
           // Run loop for values.
